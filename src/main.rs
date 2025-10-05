@@ -1,8 +1,13 @@
+use sqlx::FromRow;
 use sqlx::postgres::PgPoolOptions;
 
 use axum::extract::Path;
+use axum::extract::Query;
 use axum::extract::State;
+use axum::response::Json;
 use axum::{Router, routing::delete, routing::get, routing::post, routing::put};
+
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone)]
 struct AppState {
@@ -33,14 +38,90 @@ async fn main() -> Result<(), sqlx::Error> {
     Ok(())
 }
 
-async fn list_pets() {}
-async fn create_pet() {}
-async fn find_pet(State(state): State<AppState>, Path(pet_id): Path<String>) {
-    sqlx::query!("SELECT 1", pet_id)
+#[derive(FromRow, Serialize, Deserialize)]
+struct Pet {
+    id: i32,
+    name: String,
+    status: String,
+}
+
+async fn list_pets(State(state): State<AppState>) -> Json<Vec<Pet>> {
+    Json(
+        sqlx::query_as!(Pet, "SELECT id, name, status FROM pets")
+            .fetch_all(&state.pool)
+            .await
+            .unwrap(),
+    )
+}
+#[derive(Deserialize)]
+struct PetRequest {
+    name: String,
+    status: String,
+}
+
+async fn create_pet(State(state): State<AppState>, Json(pet): Json<PetRequest>) {
+    sqlx::query!(
+        "INSERT INTO pets (name, status) VALUES ($1, $2)",
+        pet.name,
+        pet.status
+    )
+    .execute(&state.pool)
+    .await
+    .unwrap();
+}
+async fn find_pet(State(state): State<AppState>, Path(pet_id): Path<i32>) -> Json<Pet> {
+    Json(
+        sqlx::query_as!(
+            Pet,
+            "SELECT id, name, status FROM pets WHERE id = $1",
+            pet_id
+        )
         .fetch_one(&state.pool)
+        .await
+        .unwrap(),
+    )
+}
+
+#[derive(Deserialize)]
+struct PetParams {
+    status: String,
+}
+
+async fn find_pet_by_status(
+    State(state): State<AppState>,
+    Query(params): Query<PetParams>,
+) -> Json<Vec<Pet>> {
+    Json(
+        sqlx::query_as!(
+            Pet,
+            "SELECT id, name, status FROM pets WHERE status = $1",
+            params.status
+        )
+        .fetch_all(&state.pool)
+        .await
+        .unwrap(),
+    )
+}
+async fn update_pet(
+    Path(pet_id): Path<i32>,
+    State(state): State<AppState>,
+    Json(pet): Json<PetRequest>,
+) {
+    sqlx::query!(
+        "UPDATE pets SET name = $1, status = $2 WHERE id = $3",
+        pet.name,
+        pet.status,
+        pet_id
+    )
+    .execute(&state.pool)
+    .await
+    .unwrap();
+}
+
+async fn delete_pet(Path(pet_id): Path<i32>, State(state): State<AppState>) {
+    sqlx::query!("DELETE FROM pets WHERE id = $1", pet_id)
+        .execute(&state.pool)
         .await
         .unwrap();
 }
-async fn find_pet_by_status() {}
-async fn update_pet(Path(pet_id): Path<String>) {}
-async fn delete_pet(Path(pet_id): Path<String>) {}
+
