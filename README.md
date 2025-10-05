@@ -12,6 +12,6 @@ implements something like: https://petstore.swagger.io/#/pet/uploadFile
 ## TODO
 
 - [x] setup basic endpoint struture
-- [ ] setup database
-- [ ] setup migrations
-- [ ] setup env
+- [x] setup database
+- [x] setup migrations
+- [x] setup env
