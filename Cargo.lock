@@ -1086,6 +1086,8 @@ name = "rust-crud"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "serde",
+ "serde_json",
  "sqlx",
  "tokio",
 ]
