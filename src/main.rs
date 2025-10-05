@@ -9,6 +9,9 @@ use axum::{Router, routing::delete, routing::get, routing::post, routing::put};
 
 use serde::{Deserialize, Serialize};
 
+use dotenv::dotenv;
+use std::env;
+
 #[derive(Clone)]
 struct AppState {
     pool: sqlx::Pool<sqlx::Postgres>,
@@ -16,9 +19,13 @@ struct AppState {
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
+    dotenv().ok();
+
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect("postgres://postgres:postgres@localhost/rust-crud")
+        .connect(database_url.as_str())
         .await?;
 
     let state = AppState { pool: pool };
@@ -124,4 +131,3 @@ async fn delete_pet(Path(pet_id): Path<i32>, State(state): State<AppState>) {
         .await
         .unwrap();
 }
-

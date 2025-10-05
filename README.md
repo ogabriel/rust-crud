@@ -1,6 +1,6 @@
 # Rust CRUD
 
-implements: https://petstore.swagger.io/#/pet/uploadFile
+implements something like: https://petstore.swagger.io/#/pet/uploadFile
 
 ## dependencies
 
@@ -8,3 +8,10 @@ implements: https://petstore.swagger.io/#/pet/uploadFile
 - sqlx (postgres)
 - serde
 - utoipa
+
+## TODO
+
+- [x] setup basic endpoint struture
+- [ ] setup database
+- [ ] setup migrations
+- [ ] setup env
